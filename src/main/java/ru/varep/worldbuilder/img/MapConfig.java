@@ -3,12 +3,42 @@ package ru.varep.worldbuilder.img;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-public record MapConfig(float min, float max, int scale) {
-    public static final MapConfig DEFAULT = new MapConfig(-1.0F, 1.0F, 1);
+import java.util.NavigableMap;
+import java.util.TreeMap;
+
+public record MapConfig(float min,
+                        float max,
+                        int scale,
+                        Mode mode,
+                        NavigableMap<Integer, Float> steps) {
+
+    public enum Mode { GRADIENT, STEPS }
+
+    public static final MapConfig DEFAULT = new MapConfig(-1.0F, 1.0F, 1, Mode.GRADIENT,new TreeMap<>());
+
+    private static final Codec<java.util.NavigableMap<Integer, Float>> STEPS_CODEC =
+            Codec.unboundedMap(Codec.STRING, Codec.FLOAT).xmap(map -> {
+                var out = new java.util.TreeMap<Integer, Float>();
+                for (var e : map.entrySet()) {
+                    int k = Integer.parseInt(e.getKey());
+                    if (k < 0 || k > 255) continue;
+                    out.put(k, e.getValue());
+                }
+                return out;
+            }, nav -> {
+                var out = new java.util.HashMap<String, Float>();
+                for (var e : nav.entrySet()) out.put(Integer.toString(e.getKey()), e.getValue());
+                return out;
+            });
 
     public static final Codec<MapConfig> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.FLOAT.optionalFieldOf("min", DEFAULT.min).forGetter(MapConfig::min),
             Codec.FLOAT.optionalFieldOf("max", DEFAULT.max).forGetter(MapConfig::max),
-            Codec.INT.optionalFieldOf("scale", DEFAULT.scale).forGetter(MapConfig::scale)
+            Codec.INT.optionalFieldOf("scale", DEFAULT.scale).forGetter(MapConfig::scale),
+            Codec.STRING.optionalFieldOf("mode", "gradient")
+                    .xmap(s -> s.equalsIgnoreCase("steps") ? Mode.STEPS : Mode.GRADIENT,
+                            m -> m == Mode.STEPS ? "steps" : "gradient")
+                    .forGetter(MapConfig::mode),
+            STEPS_CODEC.optionalFieldOf("steps", new java.util.TreeMap<>()).forGetter(MapConfig::steps)
     ).apply(inst, MapConfig::new));
 }

@@ -13,11 +13,15 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NavigableMap;
 
 public final class WorldbuilderMapLoader {
     private WorldbuilderMapLoader() {}
 
     private static final String MAPS_DIR = "worldbuilder/maps";
+
+    //
+    //выполянется при загрузке мира или перезагрузке списка датапаков
 
     public static void reload(ResourceManager rm) {
         MapIndex index = loadIndex(rm);
@@ -52,16 +56,28 @@ public final class WorldbuilderMapLoader {
 
                 float min = cfg.min();
                 float max = cfg.max();
-                float scale = (max - min) / 255.0F;
+                float gradientScale = (max - min) / 255.0F;
+
+                NavigableMap<Integer, Float> steps = cfg.steps();
 
                 for (int z = 0; z < h; z++) {
                     for (int x = 0; x < w; x++) {
                         int argb = img.getRGB(x, z);
+
                         int r = (argb >> 16) & 0xFF;
                         int g = (argb >> 8) & 0xFF;
                         int b = (argb) & 0xFF;
+
                         int gray = (r + g + b) / 3;
-                        values[z * w + x] = min + gray * scale;
+
+                        float v;
+                        if (cfg.mode() == MapConfig.Mode.STEPS) {
+                            v = sampleSteps(gray, steps, min);
+                        } else {
+                            v = min + gray * gradientScale;
+                        }
+
+                        values[z * w + x] = v;
                     }
                 }
 
@@ -72,12 +88,15 @@ public final class WorldbuilderMapLoader {
                         values
                 ));
             } catch (Exception e) {
-                WorldbuilderMod.LOGGER.error("Failed to load map {}: {}", id, e.toString());
+                WorldbuilderMod.LOGGER.error("Failed to load map {}", id, e);
             }
         }
 
         WorldbuilderMaps.replaceAll(out);
     }
+
+    //
+    //загрузка списка всех карт
 
     private static MapIndex loadIndex(ResourceManager rm) {
         ResourceLocation indexId = ResourceLocation.fromNamespaceAndPath(
@@ -99,6 +118,9 @@ public final class WorldbuilderMapLoader {
         }
     }
 
+    //
+    //подключение конфига
+
     private static MapConfig loadConfig(ResourceManager rm, ResourceLocation jsonId) {
         try {
             Resource res = rm.getResource(jsonId).orElse(null);
@@ -111,5 +133,23 @@ public final class WorldbuilderMapLoader {
         } catch (Exception e) {
             return MapConfig.DEFAULT;
         }
+    }
+
+    //
+    //метод для заполнения массива ступеньками из конфига
+
+    private static float sampleSteps(int gray, NavigableMap<Integer, Float> steps, float fallback) {
+        if (steps == null || steps.isEmpty()) return fallback;
+
+        var lo = steps.floorEntry(gray);
+        var hi = steps.ceilingEntry(gray);
+
+        if (lo == null) return hi.getValue();
+        if (hi == null) return lo.getValue();
+
+        int dlo = gray - lo.getKey();
+        int dhi = hi.getKey() - gray;
+
+        return (dlo <= dhi) ? lo.getValue() : hi.getValue();
     }
 }

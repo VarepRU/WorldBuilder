@@ -26,7 +26,7 @@ public final class Grayscale implements DensityFunction {
     @Override
     public double compute(FunctionContext ctx) {
         var map = WorldbuilderMaps.get(mapId);
-        return map == null ? 0.0 : map.sampleWorld(ctx.blockX(), ctx.blockZ());
+        return map == null ? 0.0 : map.sample(ctx.blockX(), ctx.blockZ());
     }
 
     @Override

@@ -15,11 +15,13 @@ public final class WorldbuilderMaps {
             float max,
             float[] values
     ) {
-        public float sampleWorld(int blockX, int blockZ) {
+        public float sample(int blockX, int blockZ) {
             int px = Math.floorDiv(blockX, scale);
             int pz = Math.floorDiv(blockZ, scale);
 
-            if (px < 0 || pz < 0 || px >= width || pz >= height) return min;
+            px = Math.floorMod(px, width);
+            pz = Math.floorMod(pz, height);
+
             return values[pz * width + px];
         }
     }

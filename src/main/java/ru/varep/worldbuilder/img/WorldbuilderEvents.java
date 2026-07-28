@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
 @EventBusSubscriber(modid = WorldbuilderMod.MODID)
 public final class WorldbuilderEvents {
 
-    //переработать
+    //переработать //или и так норм?
 
     @SubscribeEvent
     public static void addReloadListener(AddReloadListenerEvent e) {
