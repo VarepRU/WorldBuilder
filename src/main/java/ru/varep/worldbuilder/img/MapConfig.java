@@ -12,7 +12,7 @@ public record MapConfig(float min,
                         Mode mode,
                         NavigableMap<Integer, Float> steps) {
 
-    public enum Mode { GRADIENT, STEPS }
+    public enum Mode { GRADIENT, STEPS, BIOME }
 
     public static final MapConfig DEFAULT = new MapConfig(-1.0F, 1.0F, 1, Mode.GRADIENT,new TreeMap<>());
 
@@ -36,8 +36,17 @@ public record MapConfig(float min,
             Codec.FLOAT.optionalFieldOf("max", DEFAULT.max).forGetter(MapConfig::max),
             Codec.INT.optionalFieldOf("scale", DEFAULT.scale).forGetter(MapConfig::scale),
             Codec.STRING.optionalFieldOf("mode", "gradient")
-                    .xmap(s -> s.equalsIgnoreCase("steps") ? Mode.STEPS : Mode.GRADIENT,
-                            m -> m == Mode.STEPS ? "steps" : "gradient")
+                    .xmap(s -> {
+                                if (s == null) return Mode.GRADIENT;
+                                if (s.equalsIgnoreCase("steps")) return Mode.STEPS;
+                                if (s.equalsIgnoreCase("biome")) return Mode.BIOME;
+                                return Mode.GRADIENT;
+                            },
+                            m -> switch (m) {
+                                case STEPS -> "steps";
+                                case BIOME -> "biome";
+                                case GRADIENT -> "gradient";
+                            })
                     .forGetter(MapConfig::mode),
             STEPS_CODEC.optionalFieldOf("steps", new java.util.TreeMap<>()).forGetter(MapConfig::steps)
     ).apply(inst, MapConfig::new));

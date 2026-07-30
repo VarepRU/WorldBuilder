@@ -26,73 +26,61 @@ public final class WorldbuilderMapLoader {
     public static void reload(ResourceManager rm) {
         MapIndex index = loadIndex(rm);
         Map<ResourceLocation, WorldbuilderMaps.MapData> out = new HashMap<>();
-
         for (ResourceLocation id : index.maps()) {
-            ResourceLocation pngId  = ResourceLocation.fromNamespaceAndPath(
-                    id.getNamespace(),
-                    MAPS_DIR + "/" + id.getPath() + ".png"
-            );
-
-            ResourceLocation jsonId = ResourceLocation.fromNamespaceAndPath(
-                    id.getNamespace(),
-                    MAPS_DIR + "/" + id.getPath() + ".json"
-            );
-
+            ResourceLocation pngId = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), MAPS_DIR + "/" + id.getPath() + ".png");
+            ResourceLocation jsonId = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), MAPS_DIR + "/" + id.getPath() + ".json");
             MapConfig cfg = loadConfig(rm, jsonId);
-
             try {
                 Resource pngRes = rm.getResource(pngId).orElse(null);
                 if (pngRes == null) continue;
-
                 BufferedImage img;
                 try (var in = pngRes.open()) {
                     img = ImageIO.read(in);
                 }
                 if (img == null) continue;
-
                 int w = img.getWidth();
                 int h = img.getHeight();
-                float[] values = new float[w * h];
+                int scale = Math.max(1, cfg.scale());
 
+                // режим биомов
+                if (cfg.mode() == MapConfig.Mode.BIOME) {
+                    int[] rgb = new int[w * h];
+                    for (int z = 0; z < h; z++) {
+                        for (int x = 0; x < w; x++) {
+                            int argb = img.getRGB(x, z);
+                            rgb[z * w + x] = argb & 0xFFFFFF;
+                        }
+                    }
+                    out.put(id, new WorldbuilderMaps.BiomeMapData(w, h, scale, rgb));
+                    continue;
+                }
+
+                // высотные режимы
                 float min = cfg.min();
                 float max = cfg.max();
                 float gradientScale = (max - min) / 255.0F;
-
                 NavigableMap<Integer, Float> steps = cfg.steps();
-
+                float[] values = new float[w * h];
                 for (int z = 0; z < h; z++) {
                     for (int x = 0; x < w; x++) {
                         int argb = img.getRGB(x, z);
-
-                        int r = (argb >> 16) & 0xFF;
-                        int g = (argb >> 8) & 0xFF;
+                        int r = (argb >>16) &0xFF;
+                        int g = (argb >>8) &0xFF;
                         int b = (argb) & 0xFF;
-
                         int gray = (r + g + b) / 3;
-
                         float v;
                         if (cfg.mode() == MapConfig.Mode.STEPS) {
                             v = sampleSteps(gray, steps, min);
                         } else {
                             v = min + gray * gradientScale;
                         }
-
                         values[z * w + x] = v;
                     }
-                }
-
-                out.put(id, new WorldbuilderMaps.MapData(
-                        w, h,
-                        Math.max(1, cfg.scale()),
-                        min, max,
-                        values
-                ));
+                } out.put(id, new WorldbuilderMaps.HeightMapData(w, h, scale, min, max, values));
             } catch (Exception e) {
                 WorldbuilderMod.LOGGER.error("Failed to load map {}", id, e);
             }
-        }
-
-        WorldbuilderMaps.replaceAll(out);
+        } WorldbuilderMaps.replaceAll(out);
     }
 
     //

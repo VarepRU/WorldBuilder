@@ -25,7 +25,7 @@ public final class Grayscale implements DensityFunction {
 
     @Override
     public double compute(FunctionContext ctx) {
-        var map = WorldbuilderMaps.get(mapId);
+        var map = WorldbuilderMaps.getHeight(mapId);
         return map == null ? 0.0 : map.sample(ctx.blockX(), ctx.blockZ());
     }
 
@@ -44,13 +44,13 @@ public final class Grayscale implements DensityFunction {
 
     @Override
     public double minValue() {
-        var map = WorldbuilderMaps.get(mapId);
+        var map = WorldbuilderMaps.getHeight(mapId);
         return map == null ? 0.0 : map.min();
     }
 
     @Override
     public double maxValue() {
-        var map = WorldbuilderMaps.get(mapId);
+        var map = WorldbuilderMaps.getHeight(mapId);
         return map == null ? 0.0 : map.max();
     }
 
