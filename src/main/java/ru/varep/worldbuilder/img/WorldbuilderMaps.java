@@ -23,19 +23,6 @@ public final class WorldbuilderMaps {
             float max,
             float[] values
     ) implements MapData {
-
-        /*
-        public float sample(int blockX, int blockZ) {
-            int px = Math.floorDiv(blockX, scale);
-            int pz = Math.floorDiv(blockZ, scale);
-
-            px = Math.floorMod(px, width);
-            pz = Math.floorMod(pz, height);
-
-            return values[pz * width + px];
-        }
-        */
-
         public float sample(int blockX, int blockZ) {
 
             float fx = (float) blockX / (float) scale;
@@ -79,8 +66,15 @@ public final class WorldbuilderMaps {
             int width,
             int height,
             int scale,
-            int[] rgb
-    ) implements MapData {
+            int[] rgb,
+            Map<Integer, ResourceLocation> biomeMap,
+            ResourceLocation fallbackBiome
+            ) implements MapData {
+        public ResourceLocation sampleBiome(int blockX, int blockZ) {
+            int rgb = sampleRgb(blockX, blockZ);
+            return biomeMap.getOrDefault(rgb, fallbackBiome);
+        }
+
         public int sampleRgb(int blockX, int blockZ) {
             int px = Math.floorDiv(blockX, scale);
             int pz = Math.floorDiv(blockZ, scale);
@@ -88,6 +82,7 @@ public final class WorldbuilderMaps {
             pz = Math.floorMod(pz, height);
             return rgb[pz * width + px];
         }
+
     }
 
     private static volatile Map<ResourceLocation, MapData> MAPS = Map.of();
@@ -105,8 +100,6 @@ public final class WorldbuilderMaps {
             return null;
         return (md instanceof BiomeMapData bm) ? bm : null;
     }
-
-
 
 
     public static void replaceAll(Map<ResourceLocation, MapData> maps) {

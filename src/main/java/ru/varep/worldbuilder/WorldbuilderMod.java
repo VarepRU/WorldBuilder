@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.loading.FMLPaths;
 
 import ru.varep.worldbuilder.reg.WorldbuilderReg;
 
@@ -18,5 +17,6 @@ public final class WorldbuilderMod {
 
     public WorldbuilderMod(IEventBus modEventBus) {
         WorldbuilderReg.DENSITY_FUNCTION_TYPES.register(modEventBus);
+        WorldbuilderReg.BIOME_SOURCE_TYPES.register(modEventBus);
     }
 }

@@ -51,7 +51,13 @@ public final class WorldbuilderMapLoader {
                             rgb[z * w + x] = argb & 0xFFFFFF;
                         }
                     }
-                    out.put(id, new WorldbuilderMaps.BiomeMapData(w, h, scale, rgb));
+
+                    ResourceLocation fallback = ResourceLocation.withDefaultNamespace("plains");
+                    out.put(id, new WorldbuilderMaps.BiomeMapData(
+                            w, h, scale, rgb,
+                            cfg.biomeMap(),
+                            fallback
+                    ));
                     continue;
                 }
 
