@@ -6,6 +6,10 @@ import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.GsonHelper;
 import ru.varep.worldbuilder.WorldbuilderMod;
+import ru.varep.worldbuilder.img.MapData.BiomeMapData;
+import ru.varep.worldbuilder.img.MapData.HeightMapData;
+import ru.varep.worldbuilder.img.MapData.MapData;
+import ru.varep.worldbuilder.img.MapData.WorldbuilderMaps;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -25,7 +29,7 @@ public final class WorldbuilderMapLoader {
 
     public static void reload(ResourceManager rm) {
         MapIndex index = loadIndex(rm);
-        Map<ResourceLocation, WorldbuilderMaps.MapData> out = new HashMap<>();
+        Map<ResourceLocation, MapData> out = new HashMap<>();
         for (ResourceLocation id : index.maps()) {
             ResourceLocation pngId = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), MAPS_DIR + "/" + id.getPath() + ".png");
             ResourceLocation jsonId = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), MAPS_DIR + "/" + id.getPath() + ".json");
@@ -56,7 +60,7 @@ public final class WorldbuilderMapLoader {
                             ? ResourceLocation.withDefaultNamespace("plains")
                             : cfg.biomeMap().values().iterator().next();
 
-                    out.put(id, new WorldbuilderMaps.BiomeMapData(
+                    out.put(id, new BiomeMapData(
                             w, h, scale, rgb,
                             cfg.biomeMap(),
                             fallback
@@ -85,7 +89,7 @@ public final class WorldbuilderMapLoader {
                         }
                         values[z * w + x] = v;
                     }
-                } out.put(id, new WorldbuilderMaps.HeightMapData(w, h, scale, min, max, values));
+                } out.put(id, new HeightMapData(w, h, scale, min, max, values));
             } catch (Exception e) {
                 WorldbuilderMod.LOGGER.error("Failed to load map {}", id, e);
             }

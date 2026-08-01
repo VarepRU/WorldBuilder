@@ -10,7 +10,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
-import ru.varep.worldbuilder.img.WorldbuilderMaps;
+import ru.varep.worldbuilder.img.MapData.BiomeMapData;
+import ru.varep.worldbuilder.img.MapData.WorldbuilderMaps;
 
 
 import java.util.HashMap;
@@ -70,7 +71,7 @@ public class WorldbuilderBiomeSource extends BiomeSource {
     public Holder<Biome> getNoiseBiome(int quartX, int quartY, int quartZ,
                                        Climate.Sampler sampler) {
 
-        WorldbuilderMaps.BiomeMapData map = WorldbuilderMaps.getBiome(mapId);
+        BiomeMapData map = WorldbuilderMaps.getBiome(mapId);
         if (map == null) {
             return fallbackBiome;
         }
