@@ -72,7 +72,11 @@ public final class WorldbuilderMaps {
             ) implements MapData {
         public ResourceLocation sampleBiome(int blockX, int blockZ) {
             int rgb = sampleRgb(blockX, blockZ);
-            return biomeMap.getOrDefault(rgb, fallbackBiome);
+
+            ResourceLocation biome = biomeMap.get(rgb);
+            if (biome != null) return biome;
+
+            return fallbackBiome;
         }
 
         public int sampleRgb(int blockX, int blockZ) {

@@ -21,7 +21,7 @@ public final class WorldbuilderMapLoader {
     private static final String MAPS_DIR = "worldbuilder/maps";
 
     //
-    //выполянется при загрузке мира или перезагрузке списка датапаков
+    //выполняется при загрузке мира или перезагрузке списка датапаков
 
     public static void reload(ResourceManager rm) {
         MapIndex index = loadIndex(rm);
@@ -52,7 +52,10 @@ public final class WorldbuilderMapLoader {
                         }
                     }
 
-                    ResourceLocation fallback = ResourceLocation.withDefaultNamespace("plains");
+                    ResourceLocation fallback = cfg.biomeMap().isEmpty()
+                            ? ResourceLocation.withDefaultNamespace("plains")
+                            : cfg.biomeMap().values().iterator().next();
+
                     out.put(id, new WorldbuilderMaps.BiomeMapData(
                             w, h, scale, rgb,
                             cfg.biomeMap(),
