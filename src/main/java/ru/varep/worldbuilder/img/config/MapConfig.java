@@ -1,22 +1,21 @@
-package ru.varep.worldbuilder.img;
+package ru.varep.worldbuilder.img.config;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.TreeMap;
+
+import java.util.*;
 
 public record MapConfig(float min,
                         float max,
                         int scale,
                         Mode mode,
                         NavigableMap<Integer, Float> steps,
-                        Map<Integer, ResourceLocation> biomeMap) {
+                        Map<Integer, ResourceLocation> biomeMap,
+                        List<RegionConfig> regions) {
 
-    public enum Mode { GRADIENT, STEPS, BIOME }
+    public enum Mode { GRADIENT, STEPS, BIOME, REGIONS }
 
     public static final MapConfig DEFAULT = new MapConfig(
             -1.0F,
@@ -24,11 +23,12 @@ public record MapConfig(float min,
             1,
             Mode.GRADIENT,
             new TreeMap<>(),
-            new HashMap<>());
+            new HashMap<>(),
+            List.of());
 
-    private static final Codec<java.util.NavigableMap<Integer, Float>> STEPS_CODEC =
+    private static final Codec<NavigableMap<Integer, Float>> STEPS_CODEC =
             Codec.unboundedMap(Codec.STRING, Codec.FLOAT).xmap(map -> {
-                var out = new java.util.TreeMap<Integer, Float>();
+                var out = new TreeMap<Integer, Float>();
                 for (var e : map.entrySet()) {
                     int k = Integer.parseInt(e.getKey());
                     if (k < 0 || k > 255) continue;
@@ -36,7 +36,7 @@ public record MapConfig(float min,
                 }
                 return out;
             }, nav -> {
-                var out = new java.util.HashMap<String, Float>();
+                var out = new HashMap<String, Float>();
                 for (var e : nav.entrySet()) out.put(Integer.toString(e.getKey()), e.getValue());
                 return out;
             });
@@ -71,15 +71,18 @@ public record MapConfig(float min,
                                 if (s == null) return Mode.GRADIENT;
                                 if (s.equalsIgnoreCase("steps")) return Mode.STEPS;
                                 if (s.equalsIgnoreCase("biome")) return Mode.BIOME;
+                                if (s.equalsIgnoreCase("regions")) return Mode.REGIONS;
                                 return Mode.GRADIENT;
                             },
                             m -> switch (m) {
                                 case STEPS -> "steps";
                                 case BIOME -> "biome";
+                                case REGIONS -> "regions";
                                 case GRADIENT -> "gradient";
                             })
                     .forGetter(MapConfig::mode),
             STEPS_CODEC.optionalFieldOf("steps", new TreeMap<>()).forGetter(MapConfig::steps),
-            BIOME_CODEC.optionalFieldOf("biomes", new HashMap<>()).forGetter(MapConfig::biomeMap)
+            BIOME_CODEC.optionalFieldOf("biomes", new HashMap<>()).forGetter(MapConfig::biomeMap),
+            RegionConfig.CODEC.listOf().optionalFieldOf("regions", List.of()).forGetter(MapConfig::regions)
     ).apply(inst, MapConfig::new));
 }

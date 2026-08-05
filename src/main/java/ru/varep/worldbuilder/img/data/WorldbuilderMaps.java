@@ -1,4 +1,4 @@
-package ru.varep.worldbuilder.img.MapData;
+package ru.varep.worldbuilder.img.data;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.resources.ResourceLocation;
@@ -22,6 +22,11 @@ public final class WorldbuilderMaps {
     public static @Nullable BiomeMapData getBiome(ResourceLocation id) {
         MapData md = maps.get(id);
         return (md instanceof BiomeMapData bm) ? bm : null;
+    }
+
+    public static @Nullable RegionMapData getRegion(ResourceLocation id) {
+        MapData md = maps.get(id);
+        return (md instanceof RegionMapData rm) ? rm : null;
     }
 
     public static void replaceAll(Map<ResourceLocation, MapData> newMaps) {

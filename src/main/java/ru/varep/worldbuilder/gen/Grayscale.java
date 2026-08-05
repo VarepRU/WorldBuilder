@@ -6,7 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.KeyDispatchDataCodec;
 import net.minecraft.world.level.levelgen.DensityFunction;
-import ru.varep.worldbuilder.img.MapData.WorldbuilderMaps;
+import ru.varep.worldbuilder.img.data.WorldbuilderMaps;
 
 
 public final class Grayscale implements DensityFunction {

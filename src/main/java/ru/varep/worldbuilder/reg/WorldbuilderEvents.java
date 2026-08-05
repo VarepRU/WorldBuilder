@@ -2,44 +2,45 @@ package ru.varep.worldbuilder.reg;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.biome.Biome;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.AddReloadListenerEvent;
 
+import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 import ru.varep.worldbuilder.WorldbuilderMod;
-import ru.varep.worldbuilder.img.MapData.BiomeMapData;
-import ru.varep.worldbuilder.img.MapData.HeightMapData;
-import ru.varep.worldbuilder.img.MapData.WorldbuilderMaps;
+import ru.varep.worldbuilder.img.data.BiomeMapData;
+import ru.varep.worldbuilder.img.data.HeightMapData;
+import ru.varep.worldbuilder.img.data.RegionMapData;
+import ru.varep.worldbuilder.img.data.WorldbuilderMaps;
 import ru.varep.worldbuilder.img.WorldbuilderMapLoader;
+import ru.varep.worldbuilder.img.noise.core.NoiseDefinition;
 import ru.varep.worldbuilder.util.DebugTracker;
 import ru.varep.worldbuilder.util.DebugTracking;
-
-
-import java.util.concurrent.CompletableFuture;
 
 @EventBusSubscriber(modid = WorldbuilderMod.MODID)
 public final class WorldbuilderEvents {
 
-    //переработать //или и так норм?
+    //переработать //или и так норм? //TODO ПЕРЕРАБОТАТЬ
 
     @SubscribeEvent
-    public static void addReloadListener(AddReloadListenerEvent e) {
-        e.addListener((barrier, manager, prepProfiler, applyProfiler, backgroundExecutor, gameExecutor) ->
-                CompletableFuture
-                        .supplyAsync(() -> {
-                            prepProfiler.startTick();
-                            WorldbuilderMapLoader.reload(manager);
-                            prepProfiler.endTick();
-                            return null;
-                        }, backgroundExecutor)
-                        .thenCompose(barrier::wait)
-                        .thenRunAsync(() -> {
-                            applyProfiler.startTick();
-                            applyProfiler.endTick();
-                        }, gameExecutor)
+    public static void onServerStartedEvent(ServerStartedEvent event) {
+        WorldbuilderMapLoader.reload(event.getServer());
+    }
+
+    //Регистри для шумов
+
+    @SubscribeEvent
+    public static void onNewDataPackRegistry(DataPackRegistryEvent.NewRegistry event) {
+        event.dataPackRegistry(
+                WorldbuilderRegistries.NOISE_DEFINITION_REGISTRY_KEY,
+                NoiseDefinition.CODEC,
+                NoiseDefinition.CODEC
         );
     }
 
@@ -103,6 +104,33 @@ public final class WorldbuilderEvents {
                                 " | " + roundX(fx,0) + " , " + roundX(fz,0)  +
                                 " | #" + String.format("%06X", rgb & 0xFFFFFF) +
                                 " | " + biome
+                ).withColor(color), true);
+            }
+
+            case REGION_BIOME -> {
+                RegionMapData map = WorldbuilderMaps.getRegion(id);
+                if (map == null) {
+                    DebugTracking.remove(player);
+                    player.displayClientMessage(Component.literal("Tracked biome map disappeared: " + id), true);
+                    return;
+                }
+                int rid = map.getRegionId(x,z);
+
+                String name = map.getRegionName(rid);
+                int color = map.getRegionColor(rid);
+                ResourceKey<Biome> biome = map.getBiome(x, z);
+                String biomeId = biome == null ? "null" : biome.location().toString();
+
+                float fx = (float) x / (float) map.scale();
+                float fz = (float) z / (float) map.scale();
+
+
+                player.displayClientMessage(Component.literal(
+                        id +
+                                " | " + x + " , " + z +
+                                " | " + roundX(fx,0) + " , " + roundX(fz,0)  +
+                                " | " + name +
+                                " | " + biomeId
                 ).withColor(color), true);
             }
         }

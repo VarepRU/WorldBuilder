@@ -11,10 +11,7 @@ import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import ru.varep.worldbuilder.img.MapData.BiomeMapData;
-import ru.varep.worldbuilder.img.MapData.HeightMapData;
-import ru.varep.worldbuilder.img.MapData.MapData;
-import ru.varep.worldbuilder.img.MapData.WorldbuilderMaps;
+import ru.varep.worldbuilder.img.data.*;
 
 import java.util.Comparator;
 
@@ -49,7 +46,14 @@ public final class DebugCommand {
                                                 .executes(ctx -> executeTrackBiome(
                                                         ctx.getSource(),
                                                         ResourceLocationArgument.getId(ctx, "id")
-                                                )))))
+                                                ))))
+                        .then(Commands.literal("region_biome")
+                                .then(Commands.argument("id", ResourceLocationArgument.id())
+                                        .suggests(DebugCommand::suggestRegionBiomeMaps)
+                                        .executes(ctx -> executeTrackRegionBiome(
+                                                ctx.getSource(),
+                                                ResourceLocationArgument.getId(ctx, "id")
+                                        )))))
         );
     }
 
@@ -70,6 +74,7 @@ public final class DebugCommand {
                     String type =
                             data instanceof HeightMapData ? "height" :
                                     data instanceof BiomeMapData ? "biome" :
+                                            data instanceof RegionMapData ? "region_biome" :
                                             "unknown";
 
                     source.sendSuccess(() -> Component.literal("- " + id + " [" + type + "]"), false);
@@ -104,6 +109,19 @@ public final class DebugCommand {
         return 1;
     }
 
+    private static int executeTrackRegionBiome(CommandSourceStack source, ResourceLocation id) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+
+        if (!(WorldbuilderMaps.get(id) instanceof RegionMapData)) {
+            source.sendFailure(Component.literal("Biome map not found: " + id));
+            return 0;
+        }
+
+        DebugTracking.set(player, new DebugTracker(DebugTracker.MapType.REGION_BIOME, id));
+        player.displayClientMessage(Component.literal("Tracking biome map: " + id), true);
+        return 1;
+    }
+
     private static int executeStop(CommandSourceStack source) throws CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
         DebugTracking.remove(player);
@@ -130,6 +148,19 @@ public final class DebugCommand {
     ) {
         WorldbuilderMaps.ids().stream()
                 .filter(id -> WorldbuilderMaps.get(id) instanceof BiomeMapData)
+                .map(ResourceLocation::toString)
+                .sorted()
+                .forEach(builder::suggest);
+
+        return builder.buildFuture();
+    }
+
+    private static CompletableFuture<Suggestions> suggestRegionBiomeMaps(
+            CommandContext<CommandSourceStack> context,
+            SuggestionsBuilder builder
+    ) {
+        WorldbuilderMaps.ids().stream()
+                .filter(id -> WorldbuilderMaps.get(id) instanceof RegionMapData)
                 .map(ResourceLocation::toString)
                 .sorted()
                 .forEach(builder::suggest);

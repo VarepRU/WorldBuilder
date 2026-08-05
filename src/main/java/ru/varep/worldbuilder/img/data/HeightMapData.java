@@ -1,4 +1,4 @@
-package ru.varep.worldbuilder.img.MapData;
+package ru.varep.worldbuilder.img.data;
 
 public record HeightMapData(
         int width,

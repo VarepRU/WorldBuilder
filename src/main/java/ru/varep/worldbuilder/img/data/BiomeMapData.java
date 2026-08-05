@@ -1,8 +1,10 @@
-package ru.varep.worldbuilder.img.MapData;
+package ru.varep.worldbuilder.img.data;
 
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Map;
+
+//TODO Переработать как Region
 
 public record BiomeMapData(
         int width,

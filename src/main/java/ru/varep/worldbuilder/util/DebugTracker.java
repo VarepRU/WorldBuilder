@@ -5,6 +5,7 @@ import net.minecraft.resources.ResourceLocation;
 public record DebugTracker(MapType type, ResourceLocation id) {
     public enum MapType {
         HEIGHT,
-        BIOME
+        BIOME,
+        REGION_BIOME,
     }
 }
